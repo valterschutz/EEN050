@@ -28,3 +28,22 @@ act_t=tf(10,[1 5 10]); % Thrust
 act_e=tf(25,[1 25]); % Elevator deflection
 Ga=[act_t, 0;0, act_e];
 Ga = ss(Ga);
+
+%% A1 E1
+eig(A)
+%% A1 E2
+Gn_tf = tf(Gn);
+ws = logspace(-2,3);
+sigma_max = zeros(1,length(ws));
+for i = 1:length(sigma_max)
+    sigmas = svd(evalfr(Gn_tf, ws(i)));
+    sigma_max(i) = max(sigmas);
+end
+semilogx(ws, sigma_max)
+xlabel('$\omega$','Interpreter','latex')
+ylabel('$\bar{\sigma}(G_n(j\omega))$', 'Interpreter','latex')
+title('Maximum singular values')
+Hinf = max(sigma_max);
+Hinf_facit = hinfnorm(Gn);
+Qo = icare(A,B,0);
+H2 = sqrt(trace(B.'*Qo*B));
