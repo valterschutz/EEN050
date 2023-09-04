@@ -30,8 +30,7 @@ Ga=[act_t, 0;0, act_e];
 Ga = ss(Ga);
 
 %% A1 E1
-eig(A)
-%% A1 E2
+A_eigs = eig(A);
 Gn_tf = tf(Gn);
 ws = logspace(-2,3);
 sigma_max = zeros(1,length(ws));
@@ -47,3 +46,4 @@ Hinf = max(sigma_max);
 Hinf_facit = hinfnorm(Gn);
 Qo = icare(A,B,0);
 H2 = sqrt(trace(B.'*Qo*B));
+%% A1 E2
