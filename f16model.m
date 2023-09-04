@@ -42,8 +42,15 @@ semilogx(ws, sigma_max)
 xlabel('$\omega$','Interpreter','latex')
 ylabel('$\bar{\sigma}(G_n(j\omega))$', 'Interpreter','latex')
 title('Maximum singular values')
-Hinf = max(sigma_max);
-Hinf_facit = hinfnorm(Gn);
-Qo = icare(A,B,0);
-H2 = sqrt(trace(B.'*Qo*B));
+grid()
+set(gca, 'FontSize', 24);
 %% A1 E2
+Q = diag([1,100,1,1,1,100]);
+R = diag([1,1]);
+Ae = [A zeros(5,1); zeros(1,5) -1];
+Be = [B; zeros(1,2)];
+Ce = [C zeros(3,1)];
+Gn_e = ss(Ae,Be,Ce,D);
+K = lqr(Gn_e,Q,R);
+Gc = (A-B*K(:,1:5));
+%% A1 E3
