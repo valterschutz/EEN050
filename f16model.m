@@ -38,14 +38,16 @@ for i = 1:length(sigma_max)
     sigmas = svd(evalfr(Gn_tf, ws(i)));
     sigma_max(i) = max(sigmas);
 end
-semilogx(ws, sigma_max)
+loglog(ws, sigma_max)
 xlabel('$\omega$','Interpreter','latex')
 ylabel('$\bar{\sigma}(G_n(j\omega))$', 'Interpreter','latex')
 title('Maximum singular values')
 grid()
 set(gca, 'FontSize', 24);
+h2norm = norm(Gn,2);
+hinfnorm = norm(Gn,'Inf');
 %% A1 E2
-Q = diag([1,100,1,1,1,100]);
+Q = diag([0,1,0,0,0,1]);
 R = diag([1,1]);
 Ae = [A zeros(5,1); zeros(1,5) -1];
 Be = [B; zeros(1,2)];
