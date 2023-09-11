@@ -49,7 +49,7 @@ hinfnorm = norm(Gn,'Inf');
 %% A1 E2
 Q = diag([0,1,0,0,0,1]);
 R = diag([1,1]);
-Ae = [A zeros(5,1); zeros(1,5) -1];
+Ae = [A zeros(5,1); -1 zeros(1,5)];
 Be = [B; zeros(1,2)];
 Ce = [C zeros(3,1)];
 Gn_e = ss(Ae,Be,Ce,D);
