@@ -55,4 +55,35 @@ Ce = [C zeros(3,1)];
 Gn_e = ss(Ae,Be,Ce,D);
 K = lqr(Gn_e,Q,R);
 Gc = (A-B*K(:,1:5));
-%% A1 E3
+%% A2
+s = tf("s");
+%% We
+gdc = 400;
+wc = 4.3;
+ghf = 0.4;
+[k,z,p] = getparams(gdc,ghf,wc);
+We = k * (s + z)/(s + p)
+%% Wpalpha
+gdc = 2.5;
+wc = 0.45;
+ghf = 0.015;
+[k,z,p] = getparams(gdc,ghf,wc);
+Wealpha = k * (s + z)/(s + p)
+%% Wpan
+gdc = 2.5;
+wc = 0.7;
+ghf = 0.0063;
+[k,z,p] = getparams(gdc,ghf,wc);
+Wpan = k * (s + z)/(s + p)
+%% Wm1
+gdc = 0.2;
+wc = 26;
+ghf = 3;
+[k,z,p] = getparams(gdc,ghf,wc);
+Wm1 = k * (s + z)/(s + p)
+%% Wm2
+gdc = 0.16;
+wc = 42;
+ghf = 2;
+[k,z,p] = getparams(gdc,ghf,wc);
+Wm2 = k * (s + z)/(s + p)
