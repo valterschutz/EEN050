@@ -28,10 +28,11 @@ act_t=tf(10,[1 5 10]); % Thrust
 act_e=tf(25,[1 25]); % Elevator deflection
 Ga=[act_t, 0;0, act_e];
 Ga = ss(Ga);
-
+Ga_tf = tf(Ga);
 %% A1 E1
 A_eigs = eig(A);
 Gn_tf = tf(Gn);
+
 ws = logspace(-2,3);
 sigma_max = zeros(1,length(ws));
 for i = 1:length(sigma_max)
@@ -57,24 +58,30 @@ K = lqr(Gn_e,Q,R);
 Gc = (A-B*K(:,1:5));
 %% A2
 s = tf("s");
+%% Wr
+Wr = [6.25^2/(s^2+2*6.25*s+6.25^2); 0; 0]
+%% Wd
+Wd = [0; (0.9751*s+0.2491)/(s^2+0.885*s+0.1958)]
 %% We
 gdc = 400;
 wc = 4.3;
 ghf = 0.4;
 [k,z,p] = getparams(gdc,ghf,wc);
-We = k * (s + z)/(s + p)
+We = [k * (s + z)/(s + p) 0 0]
 %% Wpalpha
 gdc = 2.5;
 wc = 0.45;
 ghf = 0.015;
 [k,z,p] = getparams(gdc,ghf,wc);
-Wealpha = k * (s + z)/(s + p)
+Wpalpha = k * (s + z)/(s + p)
 %% Wpan
 gdc = 2.5;
 wc = 0.7;
 ghf = 0.0063;
 [k,z,p] = getparams(gdc,ghf,wc);
 Wpan = k * (s + z)/(s + p)
+
+Wp = [Wpalpha, 0, Wpan];
 %% Wm1
 gdc = 0.2;
 wc = 26;
@@ -87,3 +94,28 @@ wc = 42;
 ghf = 2;
 [k,z,p] = getparams(gdc,ghf,wc);
 Wm2 = k * (s + z)/(s + p)
+%% Wu
+Wu = [0 1/(35*pi/180)]
+%% Wn
+Wn = [0.001; 0.001; 0.001]
+%% A2 E2
+Wm = blkdiag(Wm1, Wm2)
+
+
+P_11 = [0 0; 0 0];
+P_12 = [0 0 0; 0 0 0];
+P_13 = [Ga_tf];
+P_21 = [-We*Gn_tf*Wm           ; Wp*Gn_tf*Wm       ; Wu*Wm];
+P_22 = [We*Wr -We*Gn_tf*Wd 0   ; 0 Wp*Gn_tf*Wd 0   ; 0 Wu*Wd 0];
+P_23 = [-We*Gn_tf*Ga_tf        ; Wp*Gn_tf*Ga_tf    ; Wu*Ga_tf    ];
+P_31 = [0 0                    ; Gn_tf*Wm         ];
+P_32 = [1 0 0                  ; [0; 0; 0] Gn_tf*Wd  Wn];
+P_33 = [0 0                    ; Gn_tf*Ga_tf      ];
+
+P = [P_11, P_12, P_13;P_21 P_22 P_23;P_31 P_32 P_33];
+nmeas=3;
+ncont=2;
+%[K,CL,gamma] = hinfsyn(P, nmeas, ncont)
+[K,CL,gamma] = h2syn(P, nmeas, ncont)
+K
+%% A2 E3
