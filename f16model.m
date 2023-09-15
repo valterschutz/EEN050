@@ -74,7 +74,6 @@ wc = 0.45;
 ghf = 0.015;
 [k,z,p] = getparams(gdc,ghf,wc);
 Wpalpha = k * (s + z)/(s + p);
-evalfr(Wpalpha, 0.0)/evalfr(Wpalpha, 0.45)
 %% Wp
 gdc = 2.5;
 wc = 0.7;
@@ -83,7 +82,6 @@ ghf = 0.0063;
 Wpan = k * (s + z)/(s + p);
 
 Wp = [Wpalpha, 0, Wpan];
-evalfr(Wpan, 0.0)/evalfr(Wpan, 0.7)
 %% Wm
 gdc = 0.2;
 wc = 26;
@@ -95,6 +93,7 @@ gdc = 0.16;
 wc = 42;
 ghf = 2;
 [k,z,p] = getparams(gdc,ghf,wc);
+
 % bottom diag
 Wm2 = k * (s + z)/(s + p);
 % full matrix
@@ -104,7 +103,6 @@ Wu = [0 1/(35*pi/180)];
 %% Wn
 Wn = [0.001*180/pi; 0.001; 0.001*3.28084];
 %% A2 E2
-
 
 P_11 = [0 0; 0 0];
 P_12 = [0 0 0; 0 0 0];
@@ -116,12 +114,18 @@ P_31 = [0 0                    ; Gn_tf*Wm         ];
 P_32 = [1 0 0                  ; [0; 0; 0] Gn_tf*Wd  Wn];
 P_33 = [0 0                    ; Gn_tf*Ga_tf      ];
 
+
+% [z; y]  = P [w; u]
+
+% [y_delta1, y_delta2, z_e, z_p, z_u, r, tilde_y1, tilde_y2, tilde_y3 ]
+% [u_delta1, u_delta2, r, d, n, u1, u2]
+
 P = [P_11, P_12, P_13;P_21 P_22 P_23;P_31 P_32 P_33];
 nmeas=4;
 ncont=2;
-
-[K,CL,gamma,info] = hinfsyn(P, nmeas, ncont);
-K
+    
+[K,CL,gamma,info] = h2syn(P, nmeas, ncont);
+gamma
 %% A2 E3
-[K,CL,gamma,info] = hinfsyn(P, nmeas, ncont);
-K
+%[K,CL,gamma,info] = hinfsyn(P, nmeas, ncont);
+%K
