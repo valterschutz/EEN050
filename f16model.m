@@ -66,37 +66,40 @@ Wd = [0; (0.9751*s+0.2491)/(s^2+0.885*s+0.1958)];
 gdc = 400;
 wc = 4.3;
 ghf = 0.4;
-[k,z,p] = getparams(gdc,ghf,wc);
-We = [k * (s + z)/(s + p) 0 0];
+% [k,z,p] = getparams(gdc,ghf,wc);
+% We = [k * (s + z)/(s + p) 0 0];
+We = [makeweight(gdc,[wc,gdc/sqrt(2)], ghf) 0 0];
 %% Wpalpha
 gdc = 2.5;
 wc = 0.45;
 ghf = 0.015;
-[k,z,p] = getparams(gdc,ghf,wc);
-Wpalpha = k * (s + z)/(s + p);
-%% Wp
+% [k,z,p] = getparams(gdc,ghf,wc);
+% Wpalpha = k * (s + z)/(s + p);
+Wpalpha = makeweight(gdc,[wc,gdc/sqrt(2)], ghf);
+%% Wpalphan
 gdc = 2.5;
 wc = 0.7;
 ghf = 0.0063;
-[k,z,p] = getparams(gdc,ghf,wc);
-Wpan = k * (s + z)/(s + p);
-
+% [k,z,p] = getparams(gdc,ghf,wc);
+% Wpan = k * (s + z)/(s + p);
+Wpan = makeweight(gdc,[wc,gdc/sqrt(2)], ghf);
+%% Wp
 Wp = [Wpalpha, 0, Wpan];
-%% Wm
+%% Wm1
 gdc = 0.2;
 wc = 26;
 ghf = 3;
-[k,z,p] = getparams(gdc,ghf,wc);
-% top diag
-Wm1 = k * (s + z)/(s + p);
+% [k,z,p] = getparams(gdc,ghf,wc);
+% Wm1 = k * (s + z)/(s + p);
+Wm1 = makeweight(gdc,[wc,ghf/sqrt(2)], ghf);
+% Wm2
 gdc = 0.16;
 wc = 42;
 ghf = 2;
-[k,z,p] = getparams(gdc,ghf,wc);
-
-% bottom diag
-Wm2 = k * (s + z)/(s + p);
-% full matrix
+% [k,z,p] = getparams(gdc,ghf,wc);
+% Wm2 = k * (s + z)/(s + p);
+Wm2 = makeweight(gdc,[wc,ghf/sqrt(2)], ghf);
+% Wm
 Wm = blkdiag(Wm1, Wm2);
 %% Wu
 Wu = [0 1/(35*pi/180)];
@@ -124,7 +127,7 @@ P = [P_11, P_12, P_13;P_21 P_22 P_23;P_31 P_32 P_33];
 nmeas=4;
 ncont=2;
     
-[K,CL,gamma,info] = h2syn(P, nmeas, ncont);
+[K,CL,gamma,info] = hinfsyn(P, nmeas, ncont);
 gamma
 %% A2 E3
 %[K,CL,gamma,info] = hinfsyn(P, nmeas, ncont);
