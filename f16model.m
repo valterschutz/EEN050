@@ -84,7 +84,7 @@ ghf = 0.0063;
 % Wpan = k * (s + z)/(s + p);
 Wpan = makeweight(gdc,[wc,gdc/sqrt(2)], ghf);
 %% Wp
-Wp = [Wpalpha, 0, Wpan];
+Wp = [Wpalpha, 0, 0; 0, 0, Wpan];
 %% Wm1
 gdc = 0.2;
 wc = 26;
@@ -111,7 +111,7 @@ P_11 = [0 0; 0 0];
 P_12 = [0 0 0; 0 0 0];
 P_13 = Ga_tf;
 P_21 = [-We*Gn_tf*Wm           ; Wp*Gn_tf*Wm       ; Wu*Wm];
-P_22 = [We*Wr -We*Gn_tf*Wd 0   ; 0 Wp*Gn_tf*Wd 0   ; 0 Wu*Wd 0];
+P_22 = [We*Wr -We*Gn_tf*Wd 0   ; [0;0] Wp*Gn_tf*Wd [0;0]   ; 0 Wu*Wd 0];
 P_23 = [-We*Gn_tf*Ga_tf        ; Wp*Gn_tf*Ga_tf    ; Wu*Ga_tf    ];
 P_31 = [0 0                    ; Gn_tf*Wm         ];
 P_32 = [1 0 0                  ; [0; 0; 0] Gn_tf*Wd  Wn];
@@ -126,8 +126,8 @@ P_33 = [0 0                    ; Gn_tf*Ga_tf      ];
 P = [P_11, P_12, P_13;P_21 P_22 P_23;P_31 P_32 P_33];
 nmeas=4;
 ncont=2;
-    
-[K,CL,gamma,info] = hinfsyn(P, nmeas, ncont);
+%%
+[K,CL,gamma,info] = hinfsyn(minreal(P), nmeas, ncont);
 gamma
 %% A2 E3
 %[K,CL,gamma,info] = hinfsyn(P, nmeas, ncont);
