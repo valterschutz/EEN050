@@ -66,47 +66,36 @@ Wd = [0; (0.9751*s+0.2491)/(s^2+0.885*s+0.1958)];
 gdc = 400;
 wc = 4.3;
 ghf = 0.4;
-% [k,z,p] = getparams(gdc,ghf,wc);
-% We = [k * (s + z)/(s + p) 0 0];
-We = [makeweight(gdc,[wc,gdc/sqrt(2)], ghf) 0 0];
+We = [makeweight(gdc,[wc,1], ghf) 0 0];
 %% Wpalpha
 gdc = 2.5;
 wc = 0.45;
 ghf = 0.015;
-% [k,z,p] = getparams(gdc,ghf,wc);
-% Wpalpha = k * (s + z)/(s + p);
-Wpalpha = makeweight(gdc,[wc,gdc/sqrt(2)], ghf);
+Wpalpha = makeweight(gdc,[wc,1], ghf);
 %% Wpalphan
 gdc = 2.5;
 wc = 0.7;
 ghf = 0.0063;
-% [k,z,p] = getparams(gdc,ghf,wc);
-% Wpan = k * (s + z)/(s + p);
-Wpan = makeweight(gdc,[wc,gdc/sqrt(2)], ghf);
+Wpan = makeweight(gdc,[wc,1], ghf);
 %% Wp
 Wp = [Wpalpha, 0, 0; 0, 0, Wpan];
 %% Wm1
 gdc = 0.2;
 wc = 26;
 ghf = 3;
-% [k,z,p] = getparams(gdc,ghf,wc);
-% Wm1 = k * (s + z)/(s + p);
-Wm1 = makeweight(gdc,[wc,ghf/sqrt(2)], ghf);
+Wm1 = makeweight(gdc,[wc,1], ghf);
 % Wm2
 gdc = 0.16;
 wc = 42;
 ghf = 2;
-% [k,z,p] = getparams(gdc,ghf,wc);
-% Wm2 = k * (s + z)/(s + p);
-Wm2 = makeweight(gdc,[wc,ghf/sqrt(2)], ghf);
+Wm2 = makeweight(gdc,[wc,1], ghf);
 % Wm
 Wm = blkdiag(Wm1, Wm2);
 %% Wu
 Wu = [0 1/(35*pi/180)];
 %% Wn
 Wn = [0.001*180/pi; 0.001; 0.001*3.28084];
-%% A2 E2
-
+%%
 P_11 = [0 0; 0 0];
 P_12 = [0 0 0; 0 0 0];
 P_13 = Ga_tf;
@@ -117,29 +106,14 @@ P_31 = [0 0                    ; Gn_tf*Wm         ];
 P_32 = [1 0 0                  ; [0; 0; 0] Gn_tf*Wd  Wn];
 P_33 = [0 0                    ; Gn_tf*Ga_tf      ];
 
-
-% [z; y]  = P [w; u]
-
-% [y_delta1, y_delta2, z_e, z_p, z_u, r, tilde_y1, tilde_y2, tilde_y3 ]
-% [u_delta1, u_delta2, r, d, n, u1, u2]
-
 P = [P_11, P_12, P_13;P_21 P_22 P_23;P_31 P_32 P_33];
 nmeas=4;
 ncont=2;
-%%
+%% A2 E2
 [K,CL,gamma,info] = hinfsyn(minreal(P), nmeas, ncont);
 gamma
-%% A2 E3
-%[K,CL,gamma,info] = hinfsyn(P, nmeas, ncont);
-%K
-
-function [k,z,p] = getparams(gdc,ghf,wc)
-    if (gdc > ghf)
-        p = wc * sqrt(1 - 2*ghf^2/gdc^2);
-    else
-        p = wc * sqrt(1 - 2*gdc^2/ghf^2);
-        %p = wc * sqrt((ghf^2-2)/(2*gdc^2/ghf^2-ghf^2));
-    end
-    k = ghf;
-    z = p*gdc/ghf;
-end
+bodemag(K)
+%% A2 E2
+[K,CL,gamma,info] = h2syn(minreal(P), nmeas, ncont);
+gamma
+bodemag(K)
