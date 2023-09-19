@@ -95,12 +95,14 @@ C = blkdiag([Cdelta,Cdelta]);
 D = blkdiag([Ddelta,Ddelta]);
 P = ss(A,B,C,D);
 
-wiM = udyn('wiM', [6,6]);
+% wiM = udyn('wiM', [6,6]);
+
+
+% Parray = ufrd(P,logspace(-2,3));
+Parray = usample(...);
+[Ppert, info] = ucover(Parray,P.NominalValue,4);
+wiM = info.?;
 WiM = 10*blkdiag([wiM,wiM]);
-
-
-Parray = ufrd(P,logspace(-2,3));
-Ppert = ucover(Parray,P.NominalValue,4);
 
 %% Exercise 3
 
