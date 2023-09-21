@@ -49,23 +49,28 @@ Gc = (A-B*K(:,1:5));
 s = tf("s");
 %% Wr
 Wr = [6.25^2/(s^2+2*6.25*s+6.25^2); 0; 0];
+Wr = [1; 0; 0];
 %% Wd
 Wd = [0; (0.9751*s+0.2491)/(s^2+0.885*s+0.1958)];
+Wd = [0; 1];
 %% We
 gdc = 400;
 wc = 4.3;
 ghf = 0.4;
 We = [makeweight(gdc,[wc,1], ghf) 0 0];
+We = [1 0 0];
 %% Wpalpha
 gdc = 2.5;
 wc = 0.45;
 ghf = 0.015;
 Wpalpha = makeweight(gdc,[wc,1], ghf);
+Wpalpha = 1;
 %% Wpalphan
 gdc = 2.5;
 wc = 0.7;
 ghf = 0.0063;
 Wpan = makeweight(gdc,[wc,1], ghf);
+Wpan = 1;
 %% Wp
 Wp = [Wpalpha, 0, 0; 0, 0, Wpan];
 %% Wm1
@@ -73,17 +78,21 @@ gdc = 0.2;
 wc = 26;
 ghf = 3;
 Wm1 = makeweight(gdc,[wc,1], ghf);
+Wm1 = 1;
 % Wm2
 gdc = 0.16;
 wc = 42;
 ghf = 2;
 Wm2 = makeweight(gdc,[wc,1], ghf);
+Wm2 = 1;
 % Wm
 Wm = blkdiag(Wm1, Wm2);
 %% Wu
 Wu = [0 1/(35*pi/180)];
+Wu = [0 1];
 %% Wn
 Wn = diag([0.001*180/pi,0.001,0.001*3.28084]);
+Wn = diag([1,1,1]);
 %%
 P_11 = [0 0; 0 0];
 P_12 = [0 0 [0,0,0]; 0 0 [0,0,0]];
@@ -96,6 +105,7 @@ P_32 = [1 0 [0,0,0]                  ; [0; 0; 0] Gn_tf*Wd  Wn];
 P_33 = [0 0                    ; Gn_tf*Ga_tf      ];
 
 P = [P_11, P_12, P_13;P_21 P_22 P_23;P_31 P_32 P_33];
+
 nmeas=4;
 ncont=2;
 %% A2 E2
@@ -134,10 +144,18 @@ d = randn(1,nsamples);
 d = zeros(1,nsamples);
 n = randn(3,nsamples);
 n = zeros(3,nsamples);
-
+%%
+y_controller = lsim(Kinf, [r; zeros(3,length(ts))], ts);
+figure(1), clf
+plot(ts,y_controller(:,1)), hold on
+plot(ts,y_controller(:,2)), hold off
 %% Hinf
 lsim(Ninf,[udelta; r;d;n],ts);
 outpinf = lsim(Ninf,[udelta; r;d;n],ts);
+%%
+figure(1), clf
+plot(ts,outpinf(:,end-2)), hold on
+plot(ts,outpinf(:,end-1)), hold off
 %% H2
 lsim(N2,[udelta; r;d;n],ts);
 outp2 = lsim(N2,[udelta; r;d;n],ts);
