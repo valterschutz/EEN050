@@ -89,30 +89,61 @@ Ddelta = [0;0];
 eig(Adelta.NominalValue)
 
 %% Exercise 2
-A = blkdiag([Adelta,Adelta]);
-B = blkdiag([Bdelta,Bdelta]);
-C = blkdiag([Cdelta,Cdelta]);
-D = blkdiag([Ddelta,Ddelta]);
-P = ss(A,B,C,D);
+A = blkdiag(Adelta,Adelta);
+B = blkdiag(Bdelta,Bdelta);
+C = blkdiag(Cdelta,Cdelta);
+D = blkdiag(Ddelta,Ddelta);
+G = ss(A,B,C,D);
 
 % wiM = udyn('wiM', [6,6]);
 
 
 % Parray = ufrd(P,logspace(-2,3));
-Parray = usample(P, 100);
-[Ppert, info] = ucover(Parray,P.NominalValue,4);
+Garray = usample(G, 100);
+[Gpert, info] = ucover(Garray,G.NominalValue,4);
 wiM = info.W1;
-WiM = 10*blkdiag([wiM,wiM]);
+WiM = 10*blkdiag(wiM,wiM);
 bodemag(WiM)
 %% Exercise 3
 
 %% Exercise 4
+s = tf('s');
+Wu = tf(0.05 * eye(2));
+thing = 1/(s+1);
+Wr = thing * eye(4);
+wp = 0.0025 / 2;
+% wp = 0.0251 / 2;
+% wp = 0.001 / 2;
+Wp = wp * ((s/7+1)/(s/(8e-3)+1)+1) * eye(4);
+Wn = tf(0.3 * pi/180 * eye(4));
 % Design and compute the controller, and call it Chinf
 % Chinf = hinfsyn(...)
 
+Wr.InputName = 'r';
+Wr.OutputName = 'Wr_r';
+Wp.InputName = 'not_zp';
+Wp.OutputName = 'zp';
+WiM.InputName = 'udelta';
+WiM.OutputName = 'ydelta';
+G.InputName = 'u_plus_udelta';
+G.OutputName = 'y';
+Wn.InputName = 'n';
+Wn.OutputName = 'Wn_n';
+Wu.InputName = 'u';
+Wu.OutputName = 'zu';
+S1 = sumblk("not_zp = y - Wr_r",4);
+S2 = sumblk('u_plus_ydelta = u + ydelta',2);
+S3 = sumblk('ym = y + Wn_n',4);
 
+P = connect(Wr,Wp,WiM,G,Wn,Wu,S1,S2,S3,{'udelta','r','n','u'},{'ydelta','zp','zu','ym'});
 
-
+nmeas = 4;
+ncont = 2;
+[K,CL,gamma] = hinfsyn(P,nmeas,ncont);
+% gamma = 1.7372
+% No RP
+% hinfnorm(P(1:4,1:2)) = 0.2381
+% Therefore RS?
 %% NB: To run the simulation, the nominal model has to be in the workspace with the variable name "Pnom"
 %
 %%%
