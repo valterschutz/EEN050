@@ -99,11 +99,11 @@ P = ss(A,B,C,D);
 
 
 % Parray = ufrd(P,logspace(-2,3));
-Parray = usample(...);
+Parray = usample(P, 100);
 [Ppert, info] = ucover(Parray,P.NominalValue,4);
-wiM = info.?;
+wiM = info.W1;
 WiM = 10*blkdiag([wiM,wiM]);
-
+bodemag(WiM)
 %% Exercise 3
 
 %% Exercise 4
