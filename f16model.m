@@ -44,55 +44,51 @@ Be = [B; zeros(1,2)];
 Ce = [C zeros(3,1)];
 Gn_e = ss(Ae,Be,Ce,D);
 K = lqr(Gn_e,Q,R);
+K_noint = K(:,1:end-1);
+K_int = K(:,end);
 Gc = (A-B*K(:,1:5));
+Gn_sim = ss(A,B,eye(size(Gn.A,1)),zeros(size(Gn.A,1),2)); % Used for simulating LQI controller
 %% A2
 s = tf("s");
 %% Wr
 Wr = [6.25^2/(s^2+2*6.25*s+6.25^2); 0; 0];
-% Wr = [1; 0; 0];
 %% Wd
 Wd = [0; (0.9751*s+0.2491)/(s^2+0.885*s+0.1958)];
-% Wd = [0; 1];
 %% We
 gdc = 400;
 wc = 4.3;
 ghf = 0.4;
 We = [makeweight(gdc,[wc,1], ghf) 0 0];
-% We = [1 0 0];
+We_sim = [1 0 0];
 %% Wpalpha
 gdc = 2.5;
 wc = 0.45;
 ghf = 0.015;
 Wpalpha = makeweight(gdc,[wc,1], ghf);
-% Wpalpha = 1;
 %% Wpalphan
 gdc = 2.5;
 wc = 0.7;
 ghf = 0.0063;
 Wpan = makeweight(gdc,[wc,1], ghf);
-% Wpan = 1;
 %% Wp
 Wp = [Wpalpha, 0, 0; 0, 0, Wpan];
+Wp_sim = [1,0,0; 0,0,1];
 %% Wm1
 gdc = 0.2;
 wc = 26;
 ghf = 3;
 Wm1 = makeweight(gdc,[wc,1], ghf);
-% Wm1 = 1;
 % Wm2
 gdc = 0.16;
 wc = 42;
 ghf = 2;
 Wm2 = makeweight(gdc,[wc,1], ghf);
-% Wm2 = 1;
 % Wm
 Wm = blkdiag(Wm1, Wm2);
 %% Wu
 Wu = [0 1/(35*pi/180)];
-% Wu = [0 1];
 %% Wn
 Wn = diag([0.001*180/pi,0.001,0.001*3.28084]);
-% Wn = diag([1,1,1]);
 %%
 P_11 = [0 0; 0 0];
 P_12 = [0 0 [0,0,0]; 0 0 [0,0,0]];
@@ -121,18 +117,26 @@ bodemag(K2)
 K2_r = K2(:,1);
 K2_y = K2(:,2:end);
 %% A3 E1
-sigma_max_Kinf = plot_sing_values(logspace(-2,3), Kinf, 'K_\infty');
+ws = logspace(-2,3);
+%% Kinf sigmas
+sigma_max_Kinf = get_sigma_max(ws,Kinf);
+plot_sing_values(ws, sigma_max_Kinf, 'K_\infty');
+%% P_nodelta sigmas
+sigma_max_P_nodelta = get_sigma_max(ws,P(3:end,3:end));
+plot_sing_values(ws, sigma_max_P_nodelta, 'P_{no\Delta}');
 %% Nominal stability if < 1 for all omegas
-sigma_max_P_nodelta = plot_sing_values(logspace(-2,3), P(3:end,3:end), 'P without Delta');
-sigma_max_Kinf(1) * sigma_max_P_nodelta(1)
+max(sigma_max_Kinf .* sigma_max_P_nodelta) % 1.9094e+05 -> not NS
 %%
 Ninf = lft(P,Kinf);  % Lower LFT
 %% Nominal performance if < 1 for all omegas
-sigma_max_Ninf_nodelta = plot_sing_values(logspace(-2,3), Ninf(3:end,3:end), 'Ninf without Delta');
+sigma_max_Ninf_nodelta = get_sigma_max(ws, Ninf(3:end,3:end));
+plot_sing_values(ws, sigma_max_Ninf_nodelta, 'N_{\infty,no\Delta}')
 %% Robust stability if < 1 for all omegas
-sigma_max_Ninf_delta = plot_sing_values(logspace(-2,3), Ninf(1:2,1:2), 'Ninf with Delta');
+sigma_max_Ninf_delta = get_sigma_max(ws, Ninf(1:2,1:2));
+plot_sing_values(ws, sigma_max_Ninf_delta, 'N_{\infty,\Delta}');
 %% Robust performance if < 1 for all omegas
-sigma_max_Ninf = plot_sing_values(logspace(-2,3), Ninf, 'N_\infty');
+sigma_max_Ninf = get_sigma_max(ws, Ninf);
+plot_sing_values(ws, sigma_max_Ninf,'N_\infty');
 %% A3 E3
 N2 = lft(P,K2);
 NI = lft(P,K);
@@ -146,57 +150,19 @@ for k = 1:5
     r(1+(k-1)*nsamples/5:k*nsamples/5) = r_vals(k);
 end
 d = randn(1,nsamples);
-%d = zeros(1,nsamples);
 n = randn(3,nsamples);
-%n = zeros(3,nsamples);
 rsignal = timeseries(r,ts);
-%% Create a different P for simulation, without weights on output
-We_sim = [1 0 0];
-Wp_sim = [1, 0, 0; 0, 0, 1];
-Wu_sim = [0 1];
-P_11 = [0 0; 0 0];
-P_12 = [0 0 [0,0,0]; 0 0 [0,0,0]];
-P_13 = Ga_tf;
-P_21 = [-We_sim*Gn_tf*Wm           ; Wp_sim*Gn_tf*Wm       ; Wu_sim*Wm];
-P_22 = [We_sim*Wr -We_sim*Gn_tf*Wd [0,0,0]   ; [0;0] Wp_sim*Gn_tf*Wd zeros(2,3)   ; 0 Wu_sim*Wd [0,0,0]];
-P_23 = [-We_sim*Gn_tf*Ga_tf        ; Wp_sim*Gn_tf*Ga_tf    ; Wu_sim*Ga_tf    ];
-P_31 = [0 0                    ; Gn_tf*Wm         ];
-P_32 = [1 0 [0,0,0]                  ; [0; 0; 0] Gn_tf*Wd  Wn];
-P_33 = [0 0                    ; Gn_tf*Ga_tf      ];
 
-P_sim = [P_11, P_12, P_13;P_21 P_22 P_23;P_31 P_32 P_33];
-
-Ninf_sim = lft(P_sim,Kinf);
-N2_sim = lft(P_sim,K2);
-% NI_sim = lft(P_sim,Kinf);
-%% Hinf
-lsim(Ninf_sim,[udelta; r;d;n],ts);
-outpinf = lsim(Ninf_sim,[udelta; r;d;n],ts);
-zeinf = outpinf(:,1);
-%% H2
-lsim(N2_sim,[udelta; r;d;n],ts);
-outp2 = lsim(N2_sim,[udelta; r;d;n],ts);
-ze2 = outp2(:,1);
-%% LQI
-Gn_e_meas_all = Gn_e;
-Gn_e_meas_all.C = eye(size(Gn_e_meas_all.A,1));
-
-lsim(NI,[udelta; r;d;n],ts);
-outpI = lsim(NI,[udelta; r;d;n],ts);
-%% Compare ze
-figure(1), clf
-plot(ts, zeinf)
-hold on
-plot(ts, ze2)
-hold off
-legend("Hinf","H2")
 %%
-function [sigma_max] = plot_sing_values(ws, G, desc)
+function [sigma_max] = get_sigma_max(ws, G)
     sigma_max = zeros(1,length(ws));
     for i = 1:length(sigma_max)
         sigmas = svd(evalfr(G, ws(i)));
         sigma_max(i) = max(sigmas);
     end
+end
+function plot_sing_values(ws, sigma_max, desc)
+    
     loglog(ws, sigma_max)
     xlabel('$\omega$','Interpreter','latex')
     ylabel(['$\bar{\sigma}(' desc ')$'], 'Interpreter','latex')
