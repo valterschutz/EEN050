@@ -116,14 +116,12 @@ wp = 0.0025 / 2;
 % wp = 0.001 / 2;
 Wp = wp * ((s/7+1)/(s/(8e-3)+1)+1) * eye(4);
 Wn = tf(0.3 * pi/180 * eye(4));
-% Design and compute the controller, and call it Chinf
-% Chinf = hinfsyn(...)
 
 Wr.InputName = 'r';
 Wr.OutputName = 'Wr_r';
 Wp.InputName = 'not_zp';
 Wp.OutputName = 'zp';
-WiM.InputName = 'udelta';
+WiM.InputName = 'u';
 WiM.OutputName = 'ydelta';
 G.InputName = 'u_plus_udelta';
 G.OutputName = 'y';
@@ -132,18 +130,19 @@ Wn.OutputName = 'Wn_n';
 Wu.InputName = 'u';
 Wu.OutputName = 'zu';
 S1 = sumblk("not_zp = y - Wr_r",4);
-S2 = sumblk('u_plus_ydelta = u + ydelta',2);
+S2 = sumblk('u_plus_udelta = u + udelta',2);
 S3 = sumblk('ym = y + Wn_n',4);
 
 P = connect(Wr,Wp,WiM,G,Wn,Wu,S1,S2,S3,{'udelta','r','n','u'},{'ydelta','zp','zu','ym'});
+Pnom = P.NominalValue;
 
 nmeas = 4;
 ncont = 2;
-[K,CL,gamma] = hinfsyn(P,nmeas,ncont);
-% gamma = 1.7372
+[Chinf,CL,gamma] = hinfsyn(P,nmeas,ncont);
+% gamma = 1.5355
 % No RP
-% hinfnorm(P(1:4,1:2)) = 0.2381
-% Therefore RS?
+% hinfnorm(P(1:4,1:2)) = Inf
+% Therefore not RS?
 %% NB: To run the simulation, the nominal model has to be in the workspace with the variable name "Pnom"
 %
 %%%
@@ -164,7 +163,7 @@ clf;
 simTime = 10;
 xinit=(pi/180)*[3 3 0 0 3 3 0 0];
 
-try
+% try
 sim('Simhinf.slx')
 subplot(2,1,1)
 hold on
@@ -182,9 +181,9 @@ hold on
     legend('Voltage X','Voltage Y')
     ylabel('Voltage [V]')
     axis([0 simTime -11 11])
-catch e
-    disp('Simulation failed')
-end
+% catch e
+%     disp('Simulation failed')
+% end
 OCL=1;
 
 %%
