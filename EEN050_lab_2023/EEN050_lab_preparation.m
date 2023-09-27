@@ -94,6 +94,7 @@ B = blkdiag(Bdelta,Bdelta);
 C = blkdiag(Cdelta,Cdelta);
 D = blkdiag(Ddelta,Ddelta);
 G = ss(A,B,C,D);
+Gnom = G.NominalValue;
 
 % wiM = udyn('wiM', [6,6]);
 
@@ -111,7 +112,7 @@ s = tf('s');
 Wu = tf(0.05 * eye(2));
 thing = 1/(s+1);
 Wr = thing * eye(4);
-wp = 0.0025 / 2;
+wp = 1 / (2*0.0025);
 % wp = 0.0251 / 2;
 % wp = 0.001 / 2;
 Wp = wp * ((s/7+1)/(s/(8e-3)+1)+1) * eye(4);
@@ -123,8 +124,8 @@ Wp.InputName = 'not_zp';
 Wp.OutputName = 'zp';
 WiM.InputName = 'u';
 WiM.OutputName = 'ydelta';
-G.InputName = 'u_plus_udelta';
-G.OutputName = 'y';
+Gnom.InputName = 'u_plus_udelta';
+Gnom.OutputName = 'y';
 Wn.InputName = 'n';
 Wn.OutputName = 'Wn_n';
 Wu.InputName = 'u';
@@ -133,8 +134,8 @@ S1 = sumblk("not_zp = y - Wr_r",4);
 S2 = sumblk('u_plus_udelta = u + udelta',2);
 S3 = sumblk('ym = y + Wn_n',4);
 
-P = connect(Wr,Wp,WiM,G,Wn,Wu,S1,S2,S3,{'udelta','r','n','u'},{'ydelta','zp','zu','ym'});
-Pnom = P.NominalValue;
+P = connect(Wr,Wp,WiM,Gnom,Wn,Wu,S1,S2,S3,{'udelta','r','n','u'},{'ydelta','zp','zu','ym'});
+Pnom = G.NominalValue;
 
 nmeas = 4;
 ncont = 2;
@@ -156,7 +157,6 @@ ncont = 2;
 % workspace with the variable name "Pnom".
 
 [ah,bh,ch,dh] = ssdata(Chinf);
-
 
 figure(1)
 clf;
