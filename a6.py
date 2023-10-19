@@ -4,37 +4,33 @@ import numpy.linalg as l
 import control
 from scipy.integrate import odeint
 
+c1 = 1/60
+c2 = 0.2
+c3 = 0.1
+ybar = 110
+
 def ex3():
     c1 = 1/60
     c2 = 0.2
     c3 = 0.1
-    A = np.array([[0,0,0,c1],[0,-c2,0,0],[0,c2,-c3,0],[0,0,c3,-c1]])
-    E = l.eigvals(A)
-    # print(E)
 
-    # Ae = np.array([[0,0,0,c1,0],[0,-c2,0,0,0],[0,c2,-c3,0,0],[0,0,c3,-c1,0],[0,0,-1,0,0]])
-    al = 1.1
-    Ae = np.array([[-al,0,0,c1],[al,-c2,0,0],[0,c2,-c3,0],[0,0,c3,-c1]])
-    # print(Ae)
-    # Be = np.array([[-1],[1],[0],[0],[0]])
-    Be = np.array([[-1],[1],[0],[0]])
+    A = np.array([[0,1],[0,0]])
+    B = np.array([[0],[1]])
+
     # print(Be)
     # Ee = l.eigvals(Ae-0.05*Be @ np.array([[0,0,0,0,1]]))
     # print(Ee)
-    Q = np.diag([0,0,1,0])
+    Q = np.diag([1,1])
     R = 1
 
-    L = control.lqr(Ae,Be,Q,R)
+    L,_,_ = control.lqr(A,B,Q,R)
     print(L)
 
 def ex4():
     def dx(x, u):
         # u is a 1-vector
-        u = u[0]
+        # u = u[0]
 
-        c1 = 1/60
-        c2 = 0.2
-        c3 = 0.1
         x1,x2,x3,x4 = x[0],x[1],x[2],x[3]
         
         dx1 = -u*x1*x3 + c1*x4
@@ -48,17 +44,27 @@ def ex4():
             return dx(x, u_fun(x))
         return odeint(odefun, x0, t)
 
-    x0 = np.array([0.1,0.2,0.3,0.4]).T
-    t = np.linspace(0,10,100)
-    K = np.array([[1,2,3,4]])
-    u_fun = lambda x : -K @ x
+    x0 = np.array([60,15,20,5]).T
+    t = np.linspace(0,20,1000)
+    def alpha(x):
+        return -((-c2**2-c2*c3)*x[1]+c3**2*x[2])/(c2*x[0]*x[2])
+    def beta(x):
+        return 1/(c2*x[0]*x[2])
+    def v_fun(x):
+        dx3 = -c3*x[2]+c2*x[1]
+        e = x[2]-ybar
+        return -(e+np.sqrt(3)*dx3)
+    def u_fun(x):
+        return alpha(x) + beta(x)*v_fun(x)
     solution = simulate(u_fun, x0, t)
     
     fig, ax = plt.subplots()
-    ax.plot(t,solution, label=["x1","x2","x3","x4"])
+    ax.plot(t,solution, label=["Susceptible (x1)","Exposed (x2)","Infected (x3)","Recovered (x4)"])
     ax.legend()
     ax.grid()
+    ax.set_title(f"ref = {ybar}")
     ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Percent (%)")
     plt.show()
 
 ex4()
